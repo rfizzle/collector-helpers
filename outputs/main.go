@@ -42,7 +42,7 @@ func WriteToOutputs(src, timestamp string) error {
 	// Google Cloud Storage output
 	if viper.GetBool("gcs") {
 		gcsPath := fmt.Sprintf("%s_%s.log", viper.GetString("gcs-path"), timestamp)
-		if err := gcsWrite(src, gcsPath, viper.GetString("gcs-bucket"), viper.GetString("gcs-creds")); err != nil {
+		if err := gcsWrite(src, gcsPath, viper.GetString("gcs-bucket"), viper.GetString("gcs-credentials")); err != nil {
 			return fmt.Errorf("unable to write to google cloud storage: %v", err)
 		}
 	}
@@ -57,7 +57,7 @@ func WriteToOutputs(src, timestamp string) error {
 
 	// Stackdriver output
 	if viper.GetBool("stackdriver") {
-		if err := stackdriverWrite(src, viper.GetString("stackdriver-project"), viper.GetString("stackdriver-log-name"), viper.GetString("stackdriver-creds"), "id.time"); err != nil {
+		if err := stackdriverWrite(src, viper.GetString("stackdriver-project"), viper.GetString("stackdriver-log-name"), viper.GetString("stackdriver-credentials"), "id.time"); err != nil {
 			log.Fatalf("Unable to write to stackdriver: %v", err)
 		}
 	}

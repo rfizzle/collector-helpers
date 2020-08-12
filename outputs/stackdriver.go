@@ -21,7 +21,7 @@ func stackdriverInitParams() {
 	flag.Bool("stackdriver", false, "enable stackdriver output")
 	flag.String("stackdriver-project", "", "stackdriver project id")
 	flag.String("stackdriver-log-name", "", "stackdriver log name")
-	flag.String("stackdriver-creds", "", "stackdriver credential file")
+	flag.String("stackdriver-credentials", "", "stackdriver credential file")
 }
 
 // stackdriverValidateParams checks if the stackdriver param has been set and validates related params.
@@ -34,8 +34,8 @@ func stackdriverValidateParams() error {
 		if viper.GetString("stackdriver-log-name") == "" {
 			return errors.New("missing stackdriver project param (--stackdriver-project)")
 		}
-		if fileExists(viper.GetString("stackdriver-creds")) {
-			return errors.New("missing stackdriver credential file (--stackdriver-creds)")
+		if fileExists(viper.GetString("stackdriver-credentials")) {
+			return errors.New("missing stackdriver credential file (--stackdriver-credentials)")
 		}
 	}
 
