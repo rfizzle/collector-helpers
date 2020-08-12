@@ -17,7 +17,7 @@ func ValidateCLIParams() error {
 		return errors.New("missing state file path param (--state-path)")
 	}
 
-	dir, _ := filepath.Split(viper.GetString("config-path"))
+	dir, _ := filepath.Split(viper.GetString("state-path"))
 
 	if !pathExists(dir) {
 		return errors.New("invalid state file path (--state-path)")
