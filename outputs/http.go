@@ -48,7 +48,7 @@ func httpWrite(src, url, rawAuth string, maxItems int) error {
 		count := 0
 
 		// Start JSON array body
-		httpBody := "["
+		httpBody := "{\n  \"results\": [\n"
 
 		// Handle HTTP object limit
 		for count < maxItems {
@@ -69,7 +69,7 @@ func httpWrite(src, url, rawAuth string, maxItems int) error {
 			count++
 		}
 
-		httpBody += "]"
+		httpBody += "\n  ]\n}"
 
 		if _, err := conductRequestRaw(url, httpBody, rawAuth); err != nil {
 			return err
