@@ -3,10 +3,10 @@ package outputs
 import (
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"io"
-	"log"
 	"os"
 	"time"
 )
@@ -57,6 +57,7 @@ func fileWrite(src, dst string, rotate bool) (int64, error) {
 	if rotate && fileExists(dst) {
 		newDst := fmt.Sprintf("%s.%s", dst, time.Now().Format(time.RFC3339))
 		err := os.Rename(dst, newDst)
+		log.Debugf("Output file rotated to: %v", newDst)
 		if err != nil {
 			return -1, err
 		}
@@ -79,10 +80,8 @@ func fileWrite(src, dst string, rotate bool) (int64, error) {
 		return nBytes, fmt.Errorf("Writer.Close: %v", err)
 	}
 
-	// Output if verbose is set
-	if viper.GetBool("verbose") {
-		log.Printf("File ouput written to : %s \n", dst)
-	}
+	// Output to debug
+	log.Debugf("File output written to : %s \n", dst)
 
 	return nBytes, err
 }
