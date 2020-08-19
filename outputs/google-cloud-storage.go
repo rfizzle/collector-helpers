@@ -19,7 +19,7 @@ func gcsInitParams() {
 	flag.Bool("gcs", false, "enable google cloud storage output")
 	flag.String("gcs-bucket", "", "google cloud storage bucket")
 	flag.String("gcs-path", "", "google cloud storage file path")
-	flag.String("gcs-creds", "", "output file path")
+	flag.String("gcs-credentials", "", "output file path")
 }
 
 // gcsValidateParams checks if the google cloud storage param has been set and validates related params.
@@ -32,8 +32,8 @@ func gcsValidateParams() error {
 		if viper.GetString("gcs-path") == "" {
 			return errors.New("missing google cloud storage output path param (--gcs-path)")
 		}
-		if viper.GetString("gcs-creds") == "" {
-			return errors.New("missing google cloud storage credentials file param (--gcs-creds)")
+		if viper.GetString("gcs-credentials") == "" {
+			return errors.New("missing google cloud storage credentials file param (--gcs-credentials)")
 		}
 	}
 
