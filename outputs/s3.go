@@ -2,14 +2,13 @@ package outputs
 
 import (
 	"errors"
-	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 )
 
@@ -55,12 +54,14 @@ func s3Write(src, dst, region, bucketName, accessKeyId, secretKey, storageClass 
 	s, err := session.NewSession(&aws.Config{
 		Region: aws.String(region),
 		Credentials: credentials.NewStaticCredentials(
-			accessKeyId, // id
-			secretKey,   // secret
-			""),         // token can be left blank for now
+			accessKeyId,
+			secretKey,
+			""),
 	})
+
+	// Handle errors
 	if err != nil {
-		return fmt.Errorf("session.NewSession: %v", err)
+		return err
 	}
 
 	// Open the source file
@@ -84,18 +85,16 @@ func s3Write(src, dst, region, bucketName, accessKeyId, secretKey, storageClass 
 
 	// Handle PutObject errors
 	if err != nil {
-		return fmt.Errorf("S3.PutObject: %v", err)
+		return err
 	}
 
 	// Handle source file closure errors
 	if err := source.Close(); err != nil {
-		return fmt.Errorf("Writer.Close: %v", err)
+		return err
 	}
 
-	// Output if verbose is set
-	if viper.GetBool("verbose") {
-		log.Printf("AWS S3 ouput written to : %s/%s \n", bucketName, dst)
-	}
+	// Output to debug
+	log.Debugf("s3 output written to : %s/%s", bucketName, dst)
 
 	return nil
 }

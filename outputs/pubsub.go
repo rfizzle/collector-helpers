@@ -16,7 +16,7 @@ import (
 // fileInitParams initializes the required CLI params for file output.
 // Uses pflag to setup flag options.
 func pubSubInitParams() {
-	flag.Bool("pubsub", false, "enable pubsub output")
+	flag.Bool("pubsub", false, "enable pub sub output")
 	flag.String("pubsub-project", "", "pub sub project id")
 	flag.String("pubsub-topic", "", "pub sub topic")
 	flag.String("pubsub-credentials", "", "pub sub credential file")
@@ -88,6 +88,9 @@ func pubSubWrite(src, projectId, topicName, credentialsFile string) error {
 			log.Warnf("error getting pub sub response: %v", err)
 		}
 	}
+
+	// Output to debug
+	log.Debugf("pubsub output written")
 
 	return nil
 }

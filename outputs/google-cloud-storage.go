@@ -4,12 +4,11 @@ import (
 	"cloud.google.com/go/storage"
 	"context"
 	"errors"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/api/option"
 	"io"
-	"log"
 	"os"
 )
 
@@ -19,7 +18,7 @@ func gcsInitParams() {
 	flag.Bool("gcs", false, "enable google cloud storage output")
 	flag.String("gcs-bucket", "", "google cloud storage bucket")
 	flag.String("gcs-path", "", "google cloud storage file path")
-	flag.String("gcs-credentials", "", "output file path")
+	flag.String("gcs-credentials", "", "google cloud storage credential file")
 }
 
 // gcsValidateParams checks if the google cloud storage param has been set and validates related params.
@@ -32,8 +31,8 @@ func gcsValidateParams() error {
 		if viper.GetString("gcs-path") == "" {
 			return errors.New("missing google cloud storage output path param (--gcs-path)")
 		}
-		if viper.GetString("gcs-credentials") == "" {
-			return errors.New("missing google cloud storage credentials file param (--gcs-credentials)")
+		if !fileExists(viper.GetString("gcs-credentials")) {
+			return errors.New("missing google cloud storage credential file (--gcs-credentials)")
 		}
 	}
 
@@ -64,28 +63,26 @@ func gcsWrite(src, dst, bucketName, credentialsFile string) error {
 
 	// Upload the file
 	if _, err = io.Copy(googleCloudStorageFile, source); err != nil {
-		return fmt.Errorf("io.Copy: %v", err)
+		return err
 	}
 
 	// Handle google cloud storage file closure errors
 	if err := googleCloudStorageFile.Close(); err != nil {
-		return fmt.Errorf("Writer.Close: %v", err)
+		return err
 	}
 
 	// Handle source file closure errors
 	if err := source.Close(); err != nil {
-		return fmt.Errorf("Writer.Close: %v", err)
+		return err
 	}
 
 	// Handle storage client closure errors
 	if err := client.Close(); err != nil {
-		return fmt.Errorf("Client.Close: %v", err)
+		return err
 	}
 
-	// Output if verbose is set
-	if viper.GetBool("verbose") {
-		log.Printf("Google Cloud Storage ouput written to : %s/%s \n", bucketName, dst)
-	}
+	// Output to debug
+	log.Debugf("google cloud storage output written to : %s/%s", bucketName, dst)
 
 	return nil
 }

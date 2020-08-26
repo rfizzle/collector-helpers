@@ -6,13 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/tidwall/gjson"
 	"google.golang.org/api/option"
-	"log"
 	"os"
-	"time"
 )
 
 // stackdriverInitParams initializes the required CLI params for stackdriver output.
@@ -34,7 +32,7 @@ func stackdriverValidateParams() error {
 		if viper.GetString("stackdriver-log-name") == "" {
 			return errors.New("missing stackdriver project param (--stackdriver-project)")
 		}
-		if fileExists(viper.GetString("stackdriver-credentials")) {
+		if !fileExists(viper.GetString("stackdriver-credentials")) {
 			return errors.New("missing stackdriver credential file (--stackdriver-credentials)")
 		}
 	}
@@ -43,10 +41,12 @@ func stackdriverValidateParams() error {
 }
 
 // stackdriverWrite takes the temporary storage file with results and writes it to stackdriver.
-func stackdriverWrite(src, project, logName, credentialsFile, timeField string) (err error) {
+func stackdriverWrite(src, project, logName, credentialsFile string) (err error) {
 	// Setup Stackdriver client
 	ctx := context.Background()
 	stackDriverClient, err := logging.NewClient(ctx, project, option.WithCredentialsFile(credentialsFile))
+
+	// Handle errors
 	if err != nil {
 		return err
 	}
@@ -71,28 +71,20 @@ func stackdriverWrite(src, project, logName, credentialsFile, timeField string) 
 		rawMsg := scanner.Text()
 		jsonValue := json.RawMessage([]byte(rawMsg))
 
-		// Get time for timestamp
-		jsonTime := gjson.Get(rawMsg, timeField).String()
-		t, err := time.Parse(time.RFC3339, jsonTime)
-
-		// Handle timestamp parse errors
-		if err != nil {
-			if err2 := source.Close(); err2 != nil {
-				return err2
-			}
-			return err
-		}
-
 		// Write to Stackdriver (stackdriver client has an internal buffer to handle batch writing)
-		stackDriverLogger.Log(logging.Entry{Timestamp: t, Payload: jsonValue})
+		stackDriverLogger.Log(logging.Entry{Payload: jsonValue})
 	}
 
 	// Wait until all buffered log entries are written to stack driver
-	stackDriverLogger.Flush()
+	err = stackDriverLogger.Flush()
 
-	if viper.GetBool("verbose") {
-		log.Printf("Stackdriver output written \n")
+	// Handle errors
+	if err != nil {
+		return err
 	}
+
+	// Output to debug
+	log.Debugf("stackdriver output written")
 
 	return source.Close()
 }

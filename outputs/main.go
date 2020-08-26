@@ -2,11 +2,12 @@ package outputs
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"log"
 )
 
 func InitCLIParams() {
+	pubSubInitParams()
 	gcsInitParams()
 	s3InitParams()
 	stackdriverInitParams()
@@ -15,6 +16,10 @@ func InitCLIParams() {
 }
 
 func ValidateCLIParams() error {
+	if err := pubSubValidateParams(); err != nil {
+		return err
+	}
+
 	if err := gcsValidateParams(); err != nil {
 		return err
 	}
@@ -39,6 +44,13 @@ func ValidateCLIParams() error {
 }
 
 func WriteToOutputs(src, timestamp string) error {
+	// Pub Sub output
+	if viper.GetBool("pubsub") {
+		if err := pubSubWrite(src, viper.GetString("pubsub-project"), viper.GetString("pubsub-topic"), viper.GetString("pubsub-credentials")); err != nil {
+			return fmt.Errorf("unable to write to pubsub: %v", err)
+		}
+	}
+
 	// Google Cloud Storage output
 	if viper.GetBool("gcs") {
 		gcsPath := fmt.Sprintf("%s_%s.log", viper.GetString("gcs-path"), timestamp)
@@ -57,7 +69,7 @@ func WriteToOutputs(src, timestamp string) error {
 
 	// Stackdriver output
 	if viper.GetBool("stackdriver") {
-		if err := stackdriverWrite(src, viper.GetString("stackdriver-project"), viper.GetString("stackdriver-log-name"), viper.GetString("stackdriver-credentials"), "id.time"); err != nil {
+		if err := stackdriverWrite(src, viper.GetString("stackdriver-project"), viper.GetString("stackdriver-log-name"), viper.GetString("stackdriver-credentials")); err != nil {
 			log.Fatalf("Unable to write to stackdriver: %v", err)
 		}
 	}

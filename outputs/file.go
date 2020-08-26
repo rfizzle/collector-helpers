@@ -81,7 +81,7 @@ func fileWrite(src, dst string, rotate bool) (int64, error) {
 	}
 
 	// Output to debug
-	log.Debugf("File output written to : %s \n", dst)
+	log.Debugf("File output written to : %s", dst)
 
 	return nBytes, err
 }
