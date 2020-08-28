@@ -53,16 +53,14 @@ func WriteToOutputs(src, timestamp string) error {
 
 	// Google Cloud Storage output
 	if viper.GetBool("gcs") {
-		gcsPath := fmt.Sprintf("%s_%s.log", viper.GetString("gcs-path"), timestamp)
-		if err := gcsWrite(src, gcsPath, viper.GetString("gcs-bucket"), viper.GetString("gcs-credentials")); err != nil {
+		if err := gcsWrite(src, viper.GetString("gcs-path"), viper.GetString("gcs-bucket"), viper.GetString("gcs-credentials"), timestamp); err != nil {
 			return fmt.Errorf("unable to write to google cloud storage: %v", err)
 		}
 	}
 
 	// Amazon S3 output
 	if viper.GetBool("s3") {
-		s3Path := fmt.Sprintf("%s_%s.log", viper.GetString("s3-path"), timestamp)
-		if err := s3Write(src, s3Path, viper.GetString("s3-region"), viper.GetString("s3-bucket"), viper.GetString("s3-access-key-id"), viper.GetString("s3-secret-key"), viper.GetString("s3-storage-class")); err != nil {
+		if err := s3Write(src, viper.GetString("s3-path"), viper.GetString("s3-region"), viper.GetString("s3-bucket"), viper.GetString("s3-access-key-id"), viper.GetString("s3-secret-key"), viper.GetString("s3-storage-class"), timestamp); err != nil {
 			log.Fatalf("Unable to write to amazon s3: %v", err)
 		}
 	}

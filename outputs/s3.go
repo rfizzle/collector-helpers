@@ -2,6 +2,7 @@ package outputs
 
 import (
 	"errors"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -49,7 +50,9 @@ func s3ValidateParams() error {
 }
 
 // s3Write takes the temporary storage file with results and copies it to AWS S3.
-func s3Write(src, dst, region, bucketName, accessKeyId, secretKey, storageClass string) error {
+func s3Write(src, dst, region, bucketName, accessKeyId, secretKey, storageClass, timestamp string) error {
+	s3Path := fmt.Sprintf("%s.%s.log", dst, timestamp)
+
 	// Setup AWS authenticated session
 	s, err := session.NewSession(&aws.Config{
 		Region: aws.String(region),
@@ -75,7 +78,7 @@ func s3Write(src, dst, region, bucketName, accessKeyId, secretKey, storageClass 
 	// Copy the object to S3
 	_, err = s3.New(s).PutObject(&s3.PutObjectInput{
 		Bucket:             aws.String(bucketName),
-		Key:                aws.String(dst),
+		Key:                aws.String(s3Path),
 		ACL:                aws.String("private"),
 		Body:               source,
 		ContentDisposition: aws.String("attachment"),
