@@ -22,6 +22,7 @@ func elasticInitParams() {
 	flag.Bool("elastic-cloud", false, "use elastic cloud service")
 	flag.String("elastic-cloud-id", "", "elastic cloud ID")
 	flag.StringSlice("elastic-urls", []string{}, "array of elasticsearch urls")
+	flag.String("elastic-index", "", "destination index for ingested logs")
 	flag.String("elastic-api-key", "", "api key authentication for elasticsearch")
 	flag.String("elastic-username", "", "username for elasticsearch basic authentication")
 	flag.String("elastic-password", "", "password for elasticsearch basic authentication")
@@ -35,6 +36,9 @@ func elasticValidateParams() error {
 		}
 		if !viper.GetBool("elastic-cloud") && len(viper.GetStringSlice("elastic-urls")) < 1 {
 			return errors.New("missing elastic urls (--elastic-urls)")
+		}
+		if viper.GetString("elastic-index") == "" {
+			return errors.New("missing index (--elastic-index)")
 		}
 		if viper.GetString("elastic-api-key") == "" && viper.GetString("elastic-username") == "" && viper.GetString("elastic-password") == "" {
 			return errors.New("missing authentication (--elastic-api-key) or (--elastic-username --elastic-password)")
