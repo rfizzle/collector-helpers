@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/api/option"
 	"os"
+	"time"
 )
 
 // fileInitParams initializes the required CLI params for file output.
@@ -42,8 +43,9 @@ func pubSubValidateParams() error {
 
 func pubSubWrite(src, projectId, topicName, credentialsFile string) error {
 	// Setup new client
-	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, projectId, option.WithCredentialsFile(credentialsFile))
+	pubSubCtx, cancelFunc := context.WithTimeout(context.Background(), time.Duration(100)*time.Second)
+	client, err := pubsub.NewClient(pubSubCtx, projectId, option.WithCredentialsFile(credentialsFile))
+	defer cancelFunc()
 
 	// Handle errors
 	if err != nil {
@@ -73,7 +75,7 @@ func pubSubWrite(src, projectId, topicName, credentialsFile string) error {
 		jsonValue := json.RawMessage([]byte(rawMsg))
 
 		// Write to Stackdriver (stackdriver client has an internal buffer to handle batch writing)
-		r := topic.Publish(ctx, &pubsub.Message{
+		r := topic.Publish(pubSubCtx, &pubsub.Message{
 			Data: jsonValue,
 		})
 
@@ -83,7 +85,7 @@ func pubSubWrite(src, projectId, topicName, credentialsFile string) error {
 
 	// Loop through and notify on errors
 	for _, r := range results {
-		_, err := r.Get(ctx)
+		_, err := r.Get(pubSubCtx)
 		if err != nil {
 			log.Warnf("error getting pub sub response: %v", err)
 		}
