@@ -2,6 +2,7 @@ package outputs
 
 import (
 	"fmt"
+	"github.com/elastic/go-elasticsearch/v7"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -12,6 +13,7 @@ func InitCLIParams() {
 	s3InitParams()
 	stackdriverInitParams()
 	httpInitParams()
+	elasticInitParams()
 	fileInitParams()
 }
 
@@ -33,6 +35,10 @@ func ValidateCLIParams() error {
 	}
 
 	if err := httpValidateParams(); err != nil {
+		return err
+	}
+
+	if err := elasticValidateParams(); err != nil {
 		return err
 	}
 
@@ -76,6 +82,40 @@ func WriteToOutputs(src, timestamp string) error {
 	if viper.GetBool("http") {
 		if err := httpWrite(src, viper.GetString("http-url"), viper.GetString("http-auth"), viper.GetInt("http-max-items")); err != nil {
 			log.Fatalf("Unable to write to HTTP: %v", err)
+		}
+	}
+
+	// ElasticSearch output
+	if viper.GetBool("elasticsearch") {
+		var esClient *elasticsearch.Client
+		var err error
+		if viper.GetBool("elastic-cloud") {
+			if viper.GetString("elastic-api-key") != "" {
+				esClient, err = elasticSetupElasticCloudClientWithApiKey(viper.GetString("elastic-cloud-id"), viper.GetString("elastic-api-key"))
+				if err != nil {
+					log.Fatalf("Unable to write to ElasticSearch: %v", err)
+				}
+			} else {
+				esClient, err = elasticSetupElasticCloudClientWithCredentials(viper.GetString("elastic-cloud-id"), viper.GetString("elastic-username"), viper.GetString("elastic-password"))
+				if err != nil {
+					log.Fatalf("Unable to write to ElasticSearch: %v", err)
+				}
+			}
+		} else {
+			if viper.GetString("elastic-api-key") != "" {
+				esClient, err = elasticSetupNormalClientWithApiKey(viper.GetStringSlice("elastic-urls"), viper.GetString("elastic-api-key"), viper.GetString("elastic-ca-cert"))
+				if err != nil {
+					log.Fatalf("Unable to write to ElasticSearch: %v", err)
+				}
+			} else {
+				esClient, err = elasticSetupNormalClientWithCredentials(viper.GetStringSlice("elastic-urls"), viper.GetString("elastic-username"), viper.GetString("elastic-password"), viper.GetString("elastic-ca-cert"))
+				if err != nil {
+					log.Fatalf("Unable to write to ElasticSearch: %v", err)
+				}
+			}
+		}
+		if err := elasticSearchWrite(esClient, viper.GetString("elastic-index"), src); err != nil {
+			log.Fatalf("Unable to write to ElasticSearch: %v", err)
 		}
 	}
 
